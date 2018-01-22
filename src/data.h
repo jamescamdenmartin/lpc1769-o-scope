@@ -12,10 +12,15 @@
 void setupADC();
 void setupCLK();
 void setupUART0();
+void setupPWM();
+
+//PWM functions
+void updatePWMSettings(float period, float dutyCycle);
 
 //data functions
-int* getOscopeData();
+int* getOscopeData(int delay, char triggerriseorfall);
 int sampleADC(int channel);
+int sampleADCtrig(int channel, char triggerriseorfall);
 
 //UART functions
 void writeUART0(char totransmit);

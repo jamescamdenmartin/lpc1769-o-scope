@@ -1,20 +1,28 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
-#define STCTRL (*(volatile unsigned int*)0xE000E010)
-#define STRELOAD (*(volatile unsigned int*)0xE000E014)
-#define STCURR (*(volatile unsigned int*)0xE000E018)
-
 void setupSysTickTimer(int CPUFREQ);
-static volatile int cpu_cycles_to_us=0;
+static volatile int cpu_cycles_to_us=26;
 
-static inline void delay_us(int delay){
-    //Load delay value into the counter
-    STRELOAD=(cpu_cycles_to_us*delay) & 0xFFFFFF;
+//Raw delay of a certain number of clock cycles. Compensates for how many cycles the setup instructions take.
+static inline void delay_clock_cycles(int cycles){
+
+}
+
+//
+//For delays greater than 3, uses exactly 26 cycles per delay when inlined, if CPU is running at 26MHz
+static inline void delay_us(int pdelay){
+	if(pdelay==0) //don't let 0 delay cause us to get stuck in the count down while loop
+		return;
+	volatile int countervalue=(cpu_cycles_to_us*pdelay);
+
+    STRELOAD=countervalue & 0xFFFFFF;
     STCURR=1; //Clears the counter and loads from STRELOAD
 
     //Enable SYSTICK Counter
     STCTRL|=1;
+
+    int test=STCURR & 0xFFFFFF;
 
     while(((STCTRL>>16) & 1)==0){} //Do nothing until SYSTICK finishes counting down
 
@@ -23,8 +31,8 @@ static inline void delay_us(int delay){
 }
 
 //Supports delay up to about 500ms to be safe (technically 625ms)
-static inline void delay_ms(int delay){
-    delay_us(delay*1000);
+static inline void delay_ms(int pdelay){
+    delay_us(pdelay*1000);
 }
 
 #endif /* UTILITIES_H_ */
